@@ -1,0 +1,82 @@
+<body>
+  <form action="" id="form">
+    <label for="username">
+      用户名：
+      <input type="text" id="username" />
+    </label>
+    <br />
+    <label for="password" placeholder="密码">
+      密码：
+      <input type="text" id="password" />
+    </label>
+    <br />
+    <p class="tip" style="color: red;"></p>
+    <label for="submit">
+      <input type="submit" value="submit" />
+    </label>
+  </form>
+</body>
+<script>
+  // 验证策略
+  const strategies = {
+    isEmpty: (value, errMsg) => {
+      if (!value) return errMsg;
+    },
+    minLength: (value, len = 6, errMsg) => {
+      if (value.length < 6) return errMsg;
+    },
+    pattern: (value, reg, errMsg) => {
+      if (!reg.test(value)) return errMsg;
+    },
+  };
+
+  // 定义验证器
+  const Validator = function () {
+    this.errMsgs = []; // 验证结果集合
+    this.cache = []; // 待进行的验证函数 [][]
+  };
+  Validator.prototype.add = function (value, rules) {
+    this.cache.push([]);
+    for (const rule of rules) {
+      const { strategy, errMsg } = rule;
+      const arg = strategy.split(":");
+      this.cache[this.cache.length - 1].push(() => {
+        const s = arg.shift();
+        return strategies[s](value, ...arg, errMsg);
+      });
+    }
+  };
+  Validator.prototype.start = function () {
+    // debugger
+    this.cache.forEach(validFns => {
+      for (const validFn of validFns) {
+        const errMsg = validFn();
+        if (errMsg) {
+          this.errMsgs.push(errMsg);
+          break; // 对于一个值只要有一条规则不满足，就退出这个值的剩余验证规则，因为此值的提示最多显示一条
+        }
+      }
+    });
+  };
+
+  // 提交进行验证
+  document.getElementById("form").onsubmit = () => {
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+    const tip = document.getElementsByClassName("tip")[0];
+    const validator = new Validator();
+    validator.add(username.value, [
+      { strategy: "isEmpty", errMsg: "用户名不能为空" },
+    ]);
+    validator.add(password.value, [
+      { strategy: "isEmpty", errMsg: "密码不能为空" },
+      { strategy: "minLength:6", errMsg: "密码不能少于6位" },
+    ]);
+    validator.start();
+    if (validator.errMsgs.length) {
+      tip.textContent = validator.errMsgs.join(",");
+      return false;
+    }
+    alert('通过验证')
+  };
+</script>

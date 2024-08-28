@@ -1,0 +1,46 @@
+<body>
+  <input type="checkbox" id="1" />
+  <input type="checkbox" id="2" />
+  <input type="checkbox" id="3" />
+  <input type="checkbox" id="4" />
+  <input type="checkbox" id="5" />
+  <input type="checkbox" id="6" />
+  <input type="checkbox" id="7" />
+  <input type="checkbox" id="8" />
+  <script>
+    // 正常请求
+    const synchronousFile = id => {
+      console.log("同步请求-", id, "中");
+    };
+
+    // 代理请求
+    const proxyFile = (() => {
+      const cache = new Set(); // 记录需要同步的 id
+      let timer = null;
+      return id => {
+        if (cache.has(id)) {
+          cache.delete(id);
+        } else {
+          cache.add(id);
+        }
+        if (timer) return;
+        // 节流控制每两秒最多触发一次同步
+        timer = setTimeout(() => {
+          for (const id of cache) {
+            synchronousFile(id);
+          }
+          clearTimeout(timer);
+          timer = null;
+        }, 2000);
+      };
+    })();
+
+    // 绑定点击事件
+    Array.prototype.forEach.call(
+      document.getElementsByTagName("input"),
+      element => {
+        element.onclick = () => proxyFile(element.id);
+      }
+    );
+  </script>
+</body>

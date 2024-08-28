@@ -1,0 +1,36 @@
+<head></head>
+<body>
+  <script>
+    // 定义代理对象
+    var miniConsole = (function () {
+      const cache = []; // 缓存待执行打印函数
+      document.addEventListener("keyup", e => {
+        console.log();
+        if (e.key === "F2") {
+          // 加载真 miniConsole
+          const scriptNode = document.createElement("script");
+          document.head.appendChild(scriptNode);
+          scriptNode.src = "./miniConsole.js";
+          // 加载后执行堆积打印函数，此时 miniConsole 已被替换
+          scriptNode.onload = () => {
+            cache.forEach(fn => {
+              fn();
+            });
+          };
+        }
+      });
+      return {
+        log(value) {
+          cache.push(() => {
+            console.log(miniConsole);
+            return miniConsole.log(value);
+          });
+        },
+      };
+    })();
+
+    for (let i = 0; i < 10; i++) {
+      miniConsole.log("message" + i);
+    }
+  </script>
+</body>

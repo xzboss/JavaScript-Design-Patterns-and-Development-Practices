@@ -1,0 +1,73 @@
+<body>
+  <div style="position: absolute; background: blue; left: 0" id="ball">
+    我是 div
+  </div>
+  <button onclick="main('linear')" style="margin-top: 100px">linear</button>
+  <button onclick="main('easeIn')" style="margin-top: 100px">easeIn</button>
+</body>
+<script>
+  const main = (() => {
+    let _instance = null;
+    return type => {
+      const animate =
+        _instance || (_instance = new Animate(document.getElementById("ball")));
+      animate.start("left", type, 0, 400, 2000);
+    };
+  })();
+  // 算法
+  var strategies = {
+    linear: function (time, startPos, endPos, duration) {
+      return (endPos * time) / duration + startPos;
+    },
+    easeIn: function (time, startPos, endPos, duration) {
+      return endPos * (time /= duration) * time + startPos;
+    },
+  };
+  const Animate = function (dom) {
+    this.dom = dom;
+    this.startPos = 0;
+    this.endPos = 0;
+    this.duration = 0;
+    this.type = null; // 运动算法
+    this.time = null;
+    this.property = "";
+  };
+  // 开始
+  Animate.prototype.start = function (
+    property,
+    type,
+    startPos,
+    endPos,
+    duration
+  ) {
+    this.property = property;
+    this.type = type;
+    this.startPos = startPos;
+    this.endPos = endPos;
+    this.duration = duration;
+    this.time = new Date().getTime();
+    // 箭头函数 this 已绑定域外
+    const timerId = setInterval(() => {
+      // 如果运动结束
+      if (this.time + this.duration <= new Date().getTime()) {
+        clearInterval(timerId);
+        this.update(this.endPos);
+      }
+      this.update();
+    }, 19);
+  };
+  // 更新位置
+  Animate.prototype.update = function (endPos) {
+    const newPos = endPos || this.step(this.type);
+    this.dom.style[this.property] = newPos + "px";
+  };
+  // 计算目前该在那个位置，使用策略
+  Animate.prototype.step = function (type) {
+    return strategies[type](
+      new Date().getTime() - this.time,
+      this.startPos,
+      this.endPos,
+      this.duration
+    );
+  };
+</script>
